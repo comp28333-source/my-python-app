@@ -6,21 +6,41 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Build with Buildozer
-      uses: ArtemSBulgakov/buildozer-action@v1
-      id: buildozer
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        command: buildozer -v android debug
-        buildozer_version: stable
+        python-version: '3.10'
+
+    - name: Install system dependencies
+      run: |
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install -y \
+          git wget curl unzip libltdl-dev libffi-dev libssl-dev \
+          python3-pip python3-setuptools python3-dev \
+          openjdk-17-jdk \
+          autoconf libtool pkg-config zlib1g-dev \
+          libncurses5 libncurses5:i386 libstdc++6:i386 libglu1-mesa:i386
+
+    - name: Install Buildozer and Cython
+      run: |
+        pip install --upgrade pip
+        pip install --user Cython==0.29.33 buildozer
+
+    - name: Build APK with Buildozer
+      run: |
+        export PATH=$PATH:~/.local/bin
+        # Автоматическое принятие лицензий SDK через yes
+        yes | buildozer -v android debug
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: package
-        path: ${{ steps.buildozer.outputs.filename }}
+        path: bin/*.apk
