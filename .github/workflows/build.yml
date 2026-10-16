@@ -10,33 +10,17 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Install Buildozer dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
-
-    - name: Install Buildozer and Cython
-      run: |
-        pip install --upgrade pip
-        pip install --user Cython==0.29.33 buildozer
+      uses: actions/checkout@v4
 
     - name: Build with Buildozer
-      run: |
-        export PATH=$PATH:~/.local/bin
-        # Автоматически принимаем лицензии Google во время первого запуска buildozer
-        yes | buildozer -v android debug || true
-        # Второй запуск дособирает проект, когда SDK и aidl уже будут на месте
-        buildozer -v android debug
+      uses: ArtemSBulgakov/buildozer-action@v1
+      id: buildozer
+      with:
+        command: buildozer -v android debug
+        buildozer_version: stable
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: package
-        path: bin/*.apk
+        path: ${{ steps.buildozer.outputs.filename }}
