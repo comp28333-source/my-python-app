@@ -27,6 +27,17 @@ jobs:
         pip install --upgrade pip
         pip install --user Cython==0.29.33 buildozer
 
+    - name: Accept Android licenses and preinstall build-tools
+      run: |
+        export PATH=$PATH:~/.local/bin
+        # Создаем структуру и принимаем лицензии Google SDK, чтобы скачался aidl
+        mkdir -p ~/.buildozer/android/platform/android-sdk
+        yes | sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk --licenses || true
+        # Можно запустить холостой билд или дать buildozer отработать
+        buildozer -v android debug || true
+        # Принудительно устанавливаем build-tools для API 31, где гарантированно есть aidl
+        ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk "build-tools;30.0.3" "platforms;android-31" || true
+
     - name: Build with Buildozer
       run: |
         export PATH=$PATH:~/.local/bin
