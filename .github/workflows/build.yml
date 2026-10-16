@@ -33,10 +33,18 @@ jobs:
         pip install --upgrade pip
         pip install --user Cython==0.29.33 buildozer
 
+    # Кэшируем папку .buildozer, чтобы при обрыве связи не качать SDK/NDK заново
+    - name: Cache Buildozer global directory
+      uses: actions/cache@v4
+      with:
+        path: ~/.buildozer
+        key: ${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+        restore-keys: |
+          ${{ runner.os }}-buildozer-
+
     - name: Build APK with Buildozer
       run: |
         export PATH=$PATH:~/.local/bin
-        # Автоматическое принятие лицензий SDK через yes
         yes | buildozer -v android debug
 
     - name: Upload APK artifact
